@@ -1,5 +1,6 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, globalShortcut, ipcMain } from "electron";
 import path from "node:path";
+import { clipboardListener, getClipboardContents } from "./utils";
 
 // The built directory structure
 //
@@ -27,9 +28,8 @@ function createWindow() {
     },
   });
 
-  // Test active push message to Renderer-process.
-  win.webContents.on("did-finish-load", () => {
-    win?.webContents.send("main-process-message", new Date().toLocaleString());
+  clipboardListener((text) => {
+    win?.webContents.send("clipboard-updated", text);
   });
 
   if (VITE_DEV_SERVER_URL) {
@@ -58,8 +58,18 @@ app.on("activate", () => {
   }
 });
 
-app.whenReady().then(() => {
-  ipcMain.handle("getOsName", () => process.platform);
+function pasteContent(contentNumber: number) {
+  console.log(contentNumber);
+}
 
-  createWindow();
-});
+app
+  .whenReady()
+  .then(() => {
+    for (let i = 1; i <= 9; i++) {
+      globalShortcut.register(`CommandOrControl+c+${i}`, () => pasteContent(i));
+    }
+  })
+  .then(() => {
+    ipcMain.handle("getContents", async () => await getClipboardContents());
+    createWindow();
+  });

@@ -1,6 +1,4 @@
-export interface IElectronAPI {
-  loadPreferences: () => Promise<void>;
-}
+import { IElectronAPI } from "./preload";
 
 declare global {
   interface Window {

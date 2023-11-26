@@ -20,13 +20,3 @@ declare namespace NodeJS {
     VITE_PUBLIC: string;
   }
 }
-
-// Used in Renderer process, expose in `preload.ts`
-
-interface IElectronAPI {
-  getOsName: () => Promise<string>;
-}
-
-interface Window {
-  electronAPI: IElectronAPI;
-}
