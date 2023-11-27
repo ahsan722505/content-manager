@@ -8,7 +8,6 @@ function App() {
     window.electronAPI.getContents().then((contents) => setContents(contents));
 
     window.electronAPI.subscribeClipboardData((_, text) => {
-      console.log(text);
       setContents((state) => [text, ...state]);
     });
 
