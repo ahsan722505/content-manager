@@ -9,7 +9,7 @@ export async function clipboardListener(callback: (text: string) => void) {
 
   setInterval(() => {
     const text = clipboard.readText().trim();
-    if (text !== latestClipboardContent) {
+    if (text !== latestClipboardContent && text !== "") {
       latestClipboardContent = text;
       callback(text);
       storeClipboardContent(text);

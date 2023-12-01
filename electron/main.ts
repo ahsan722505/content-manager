@@ -1,6 +1,13 @@
-import { app, BrowserWindow, globalShortcut, ipcMain } from "electron";
+import {
+  app,
+  BrowserWindow,
+  clipboard,
+  globalShortcut,
+  ipcMain,
+} from "electron";
 import path from "node:path";
 import { clipboardListener, getClipboardContents } from "./utils";
+var robot = require("robotjs");
 
 // The built directory structure
 //
@@ -20,6 +27,7 @@ let win: BrowserWindow | null;
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
 
+console.log(process.version);
 function createWindow() {
   win = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
@@ -59,14 +67,20 @@ app.on("activate", () => {
 });
 
 function pasteContent(contentNumber: number) {
-  console.log(contentNumber);
+  getClipboardContents().then((contents) => {
+    const content = contents[contentNumber - 1];
+    // clipboard.writeText(content);
+    // robot.keyTap("v", ["control"]);
+    robot.setKeyboardDelay(0);
+    robot.typeString(content);
+  });
 }
 
 app
   .whenReady()
   .then(() => {
     for (let i = 1; i <= 9; i++) {
-      globalShortcut.register(`CommandOrControl+c+${i}`, () => pasteContent(i));
+      globalShortcut.register(`CommandOrControl+${i}`, () => pasteContent(i));
     }
   })
   .then(() => {

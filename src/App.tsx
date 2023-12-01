@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "./App.css";
+import Content from "./Components/Content";
 
 function App() {
   const [contents, setContents] = useState<string[]>([]);
@@ -17,9 +18,9 @@ function App() {
   }, []);
 
   return (
-    <div>
+    <div className="m-3">
       {contents.map((c) => (
-        <li>{c}</li>
+        <Content content={c} />
       ))}
     </div>
   );
