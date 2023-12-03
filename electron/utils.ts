@@ -12,7 +12,6 @@ export async function clipboardListener(callback: (text: string) => void) {
     const text = clipboard.readText().trim();
     if (text !== latestClipboardContent && text !== "") {
       latestClipboardContent = text;
-      latestContents.unshift(text);
       callback(text);
       storeClipboardContent(text);
     }
@@ -27,17 +26,20 @@ export async function getClipboardContents(): Promise<string[]> {
 
 export async function storeClipboardContent(text: string) {
   const json = await readFile(dbPath, { encoding: "utf-8" });
-  const data = JSON.parse(json);
+  const data: { contents: string[] } = JSON.parse(json);
   data.contents.unshift(text);
-  writeFile("./contents.json", JSON.stringify(data));
+  const uniqueData = [...new Set(data.contents)];
+  latestContents = uniqueData.slice(0, 9);
+  writeFile("./contents.json", JSON.stringify({ contents: uniqueData }));
 }
 
-export function pasteContent(content: string) {
+export function pasteContent(content: string | undefined) {
+  if (!content) return;
   clipboard.writeText(content);
   spawn("/usr/bin/python3", ["./python/keyboard.py", content]);
 }
 
-export const latestContents: string[] = [];
+export let latestContents: string[] = [];
 
 export async function initializeLatestContents() {
   const contents = await getClipboardContents();
