@@ -1,16 +1,19 @@
 import { clipboard } from "electron";
 import { readFile, writeFile } from "fs/promises";
 import path from "node:path";
-import { spawn } from "child_process";
+import { exec } from "child_process";
 
 const dbPath = path.join(__dirname, "../contents.json");
 
-export async function clipboardListener(callback: (text: string) => void) {
-  let latestClipboardContent = (await getClipboardContents())[0];
+let latestClipboardContent: string;
 
+let customPasting = false;
+
+export async function clipboardListener(callback: (text: string) => void) {
+  latestClipboardContent = (await getClipboardContents())[0];
   setInterval(() => {
     const text = clipboard.readText().trim();
-    if (text !== latestClipboardContent && text !== "") {
+    if (text !== latestClipboardContent && text !== "" && !customPasting) {
       latestClipboardContent = text;
       callback(text);
       storeClipboardContent(text);
@@ -35,8 +38,13 @@ export async function storeClipboardContent(text: string) {
 
 export function pasteContent(content: string | undefined) {
   if (!content) return;
+  customPasting = true;
   clipboard.writeText(content);
-  spawn("/usr/bin/python3", ["./python/keyboard.py", content]);
+  const childProcess = exec("./cpp/keyboard");
+  childProcess.on("exit", () => {
+    clipboard.writeText(latestClipboardContent);
+    customPasting = false;
+  });
 }
 
 export let latestContents: string[] = [];
