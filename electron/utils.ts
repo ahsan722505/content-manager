@@ -55,3 +55,5 @@ export async function initializeLatestContents() {
     latestContents[i] = contents[i];
   }
 }
+
+console.log("utils.ts loaded");
