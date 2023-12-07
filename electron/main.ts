@@ -2,6 +2,7 @@ import { app, BrowserWindow, globalShortcut, ipcMain } from "electron";
 import path from "node:path";
 import {
   clipboardListener,
+  deleteContent,
   getClipboardContents,
   initializeLatestContents,
   latestContents,
@@ -79,5 +80,6 @@ app
   })
   .then(() => {
     ipcMain.handle("getContents", async () => await getClipboardContents());
+    ipcMain.on("deleteContent", (_, content) => deleteContent(content));
     createWindow();
   });

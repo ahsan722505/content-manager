@@ -8,6 +8,7 @@ export interface IElectronAPI {
   ) => void;
   unsubscribeClipboardData: () => void;
   getContents: () => Promise<string[]>;
+  deleteContent: (content: string) => void;
 }
 
 const electronApi: IElectronAPI = {
@@ -17,5 +18,7 @@ const electronApi: IElectronAPI = {
   unsubscribeClipboardData: () =>
     ipcRenderer.removeAllListeners("clipboard-updated"),
   getContents: () => ipcRenderer.invoke("getContents"),
+  deleteContent: (content: string) =>
+    ipcRenderer.send("deleteContent", content),
 };
 contextBridge.exposeInMainWorld("electronAPI", electronApi);

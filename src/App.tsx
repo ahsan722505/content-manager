@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 import Content from "./Components/Content";
-import { Input } from "antd";
+import { Input, message } from "antd";
 
 function App() {
   const [contents, setContents] = useState<string[]>([]);
@@ -23,6 +23,12 @@ function App() {
     c.toLowerCase().includes(searchedText.toLowerCase().trim())
   );
 
+  const deleteContentHandler = (content: string) => {
+    setContents((state) => state.filter((c) => c !== content));
+    window.electronAPI.deleteContent(content);
+    message.success("Content deleted successfully");
+  };
+
   return (
     <div className="m-3">
       <Input
@@ -31,7 +37,7 @@ function App() {
         onChange={(e) => setSearchedText(e.target.value)}
       />
       {filteredContents.map((c) => (
-        <Content content={c} />
+        <Content content={c} deleteContenthandler={deleteContentHandler} />
       ))}
     </div>
   );

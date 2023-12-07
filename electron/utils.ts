@@ -56,4 +56,13 @@ export async function initializeLatestContents() {
   }
 }
 
-console.log("utils.ts loaded");
+export async function deleteContent(content: string) {
+  const contents = await getClipboardContents();
+  const newContents = contents.filter((c) => c !== content);
+  latestContents = newContents.slice(0, 9);
+  if (latestClipboardContent === content) {
+    latestClipboardContent = latestContents[0];
+    clipboard.writeText(latestClipboardContent);
+  }
+  writeFile("./contents.json", JSON.stringify({ contents: newContents }));
+}
