@@ -2,8 +2,12 @@ import { clipboard } from "electron";
 import { readFile, writeFile } from "fs/promises";
 import path from "node:path";
 import { exec } from "child_process";
+import db from "./db";
 
-const dbPath = path.join(__dirname, "../contents.json");
+export type Content = {
+  id: number;
+  content: string;
+};
 
 let latestClipboardContent: string;
 
@@ -21,19 +25,27 @@ export async function clipboardListener(callback: (text: string) => void) {
   }, 1000);
 }
 
-export async function getClipboardContents(): Promise<string[]> {
-  const json = await readFile(dbPath, { encoding: "utf-8" });
-  const contents: string[] = JSON.parse(json).contents;
-  return contents;
+export async function getClipboardContents(): Promise<Content[]> {
+  return new Promise((resolve, reject) => {
+    db.all(
+      `SELECT content, MAX(ID) AS id
+    FROM contents
+    GROUP BY content
+    ORDER BY id DESC;`,
+      (error, rows: Content[]) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(rows);
+        }
+      }
+    );
+  });
 }
 
 export async function storeClipboardContent(text: string) {
-  const json = await readFile(dbPath, { encoding: "utf-8" });
-  const data: { contents: string[] } = JSON.parse(json);
-  data.contents.unshift(text);
-  const uniqueData = [...new Set(data.contents)];
-  latestContents = uniqueData.slice(0, 9);
-  writeFile("./contents.json", JSON.stringify({ contents: uniqueData }));
+  db.run(`INSERT INTO contents(content) VALUES(?)`, [text]);
+  latestContents.addContent(text);
 }
 
 export function pasteContent(content: string | undefined) {
@@ -47,22 +59,46 @@ export function pasteContent(content: string | undefined) {
   });
 }
 
-export let latestContents: string[] = [];
-
-export async function initializeLatestContents() {
-  const contents = await getClipboardContents();
-  for (let i = 0; i < 9; i++) {
-    latestContents[i] = contents[i];
-  }
-}
-
 export async function deleteContent(content: string) {
-  const contents = await getClipboardContents();
-  const newContents = contents.filter((c) => c !== content);
-  latestContents = newContents.slice(0, 9);
-  if (latestClipboardContent === content) {
-    latestClipboardContent = latestContents[0];
-    clipboard.writeText(latestClipboardContent);
-  }
-  writeFile("./contents.json", JSON.stringify({ contents: newContents }));
+  // const contents = await getClipboardContents();
+  // const newContents = contents.filter((c) => c !== content);
+  // latestContents = newContents.slice(0, 9);
+  // if (latestClipboardContent === content) {
+  //   latestClipboardContent = latestContents[0];
+  //   clipboard.writeText(latestClipboardContent);
+  // }
+  // writeFile("./contents.json", JSON.stringify({ contents: newContents }));
 }
+
+class LatestContentsCache {
+  private contents: string[] = [];
+  private cacheSize: number;
+  constructor(cacheSize: number) {
+    this.cacheSize = cacheSize;
+  }
+
+  public initialize() {
+    // asynchronously initializes the cache
+    getClipboardContents().then((contents) => {
+      this.contents = contents.map((c) => c.content).slice(0, this.cacheSize);
+    });
+    return this;
+  }
+
+  public get(): string[] {
+    return this.contents.slice(0, this.cacheSize);
+  }
+
+  public addContent(content: string) {
+    this.contents = [
+      content,
+      ...this.contents.filter((c) => c !== content),
+    ].slice(0, this.cacheSize);
+  }
+
+  public deleteContent(content: string) {
+    this.contents = this.contents.filter((c) => c !== content);
+  }
+}
+
+export const latestContents = new LatestContentsCache(9).initialize();
