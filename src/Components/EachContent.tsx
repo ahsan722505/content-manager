@@ -1,15 +1,16 @@
 import { Button, Popconfirm, message } from "antd";
 import { CopyOutlined } from "@ant-design/icons";
+import { Content } from "../../electron/utils";
 
-const Content = ({
+const EachContent = ({
   content,
   deleteContenthandler,
 }: {
-  content: string;
-  deleteContenthandler: (content: string) => void;
+  content: Content;
+  deleteContenthandler: (content: Content) => void;
 }) => {
   const handleCopy = () => {
-    navigator.clipboard.writeText(content);
+    navigator.clipboard.writeText(content.content);
     message.success("Copied!");
   };
 
@@ -37,9 +38,9 @@ const Content = ({
           Copy
         </Button>
       </div>
-      <p>{content}</p>
+      <p>{content.content}</p>
     </div>
   );
 };
 
-export default Content;
+export default EachContent;

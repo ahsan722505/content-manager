@@ -4,10 +4,12 @@ import {
   clipboardListener,
   deleteContent,
   getClipboardContents,
-  initializeLatestContents,
   latestContents,
+  LatestContentsCache,
   pasteContent,
+  setupDatabase,
 } from "./utils";
+import { Database } from "./database";
 
 // The built directory structure
 //
@@ -26,10 +28,6 @@ process.env.VITE_PUBLIC = app.isPackaged
 let win: BrowserWindow | null;
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
-
-(async () => {
-  await initializeLatestContents();
-})();
 
 function createWindow() {
   win = new BrowserWindow({
@@ -74,11 +72,13 @@ app
   .then(() => {
     for (let i = 1; i <= 9; i++) {
       globalShortcut.register(`CommandOrControl+${i}`, () =>
-        pasteContent(latestContents[i - 1])
+        pasteContent(latestContents.get(i - 1))
       );
     }
   })
-  .then(() => {
+  .then(async () => {
+    await setupDatabase();
+    latestContents.initialize();
     ipcMain.handle("getContents", async () => await getClipboardContents());
     ipcMain.on("deleteContent", (_, content) => deleteContent(content));
     createWindow();
