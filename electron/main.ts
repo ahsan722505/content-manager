@@ -5,11 +5,9 @@ import {
   deleteContent,
   getClipboardContents,
   latestContents,
-  LatestContentsCache,
   pasteContent,
   setupDatabase,
 } from "./utils";
-import { Database } from "./database";
 
 // The built directory structure
 //

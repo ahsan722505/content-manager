@@ -1,6 +1,6 @@
 import { clipboard } from "electron";
 import { exec } from "child_process";
-import { Database } from "./database";
+import { sqlite } from "./sqlite";
 
 export type Content = {
   ID: number;
@@ -20,7 +20,7 @@ export async function clipboardListener(callback: (content: Content) => void) {
 }
 
 export async function getClipboardContents(): Promise<Content[]> {
-  const { db } = new Database();
+  const { db } = new sqlite();
   return new Promise((resolve, reject) => {
     db.all(
       `SELECT * FROM contents
@@ -39,7 +39,7 @@ export async function getClipboardContents(): Promise<Content[]> {
 
 export async function storeClipboardContent(text: string): Promise<number> {
   return new Promise((resolve, reject) => {
-    const { db } = new Database();
+    const { db } = new sqlite();
     db.run(
       `INSERT OR REPLACE INTO contents (content) VALUES (?)`,
       [text],
@@ -67,8 +67,8 @@ export function pasteContent(content: string | undefined) {
 }
 
 export async function deleteContent(content: Content) {
-  const { db } = new Database();
-  db.run(`DELETE FROM contents WHERE id = ?`, [content.id]);
+  const { db } = new sqlite();
+  db.run(`DELETE FROM contents WHERE id = ?`, [content.ID]);
   if (latestContents.get(0) === content.content) {
     clipboard.writeText(latestContents.get(1));
   }
@@ -76,7 +76,7 @@ export async function deleteContent(content: Content) {
 }
 
 export function setupDatabase(): Promise<void> {
-  const { db } = new Database();
+  const { db } = new sqlite();
   return new Promise((resolve) => {
     db.exec(
       `
