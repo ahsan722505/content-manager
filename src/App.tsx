@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 import EachContent from "./Components/EachContent";
-import { Input, message } from "antd";
+import { Input } from "antd";
 import { Content } from "../electron/utils";
 
 function App() {
   const [contents, setContents] = useState<Content[]>([]);
   const [searchedText, setSearchedText] = useState<string>("");
-  console.log(contents);
 
   useEffect(() => {
     window.electronAPI.getContents().then((contents) => setContents(contents));
@@ -28,12 +27,6 @@ function App() {
     c.content.toLowerCase().includes(searchedText.toLowerCase().trim())
   );
 
-  const deleteContentHandler = (content: Content) => {
-    setContents((state) => state.filter((c) => c.ID !== content.ID));
-    window.electronAPI.deleteContent(content);
-    message.success("Content deleted successfully");
-  };
-
   return (
     <div className="m-3">
       <Input
@@ -42,7 +35,7 @@ function App() {
         onChange={(e) => setSearchedText(e.target.value)}
       />
       {filteredContents.map((c) => (
-        <EachContent content={c} deleteContenthandler={deleteContentHandler} />
+        <EachContent key={c.ID} content={c} setContents={setContents} />
       ))}
     </div>
   );

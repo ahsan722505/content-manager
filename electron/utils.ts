@@ -5,6 +5,7 @@ import { sqlite } from "./sqlite";
 export type Content = {
   ID: number;
   content: string;
+  hotkey?: string;
 };
 
 let customPasting = false;
@@ -47,6 +48,7 @@ export async function storeClipboardContent(text: string): Promise<number> {
         if (error) {
           reject(error);
         } else {
+          console.log(this);
           resolve(this.lastID);
         }
       }
@@ -83,12 +85,45 @@ export function setupDatabase(): Promise<void> {
       CREATE TABLE IF NOT EXISTS contents
 (
     ID INTEGER PRIMARY KEY AUTOINCREMENT,
-    content TEXT UNIQUE NOT NULL
+    content TEXT UNIQUE NOT NULL,
+    hotkey TEXT UNIQUE
 );
 `,
       (error) => {
         console.log(error);
         resolve();
+      }
+    );
+  });
+}
+
+export function assignHotkey(
+  contentId: number,
+  hotkey: string
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const { db } = new sqlite();
+    db.get(
+      `SELECT * FROM contents WHERE hotkey = ?`,
+      [hotkey],
+      (error, row) => {
+        if (error) {
+          reject(error);
+        } else if (row) {
+          reject("Hotkey is already assigned to some other content.");
+        } else {
+          db.run(
+            `UPDATE contents SET hotkey = ? WHERE id = ?`,
+            [hotkey, contentId],
+            (error) => {
+              if (error) {
+                reject(error);
+              } else {
+                resolve("Hotkey assigned successfully.");
+              }
+            }
+          );
+        }
       }
     );
   });

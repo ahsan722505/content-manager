@@ -9,6 +9,7 @@ export interface IElectronAPI {
   ) => void;
   unsubscribeClipboardData: () => void;
   getContents: () => Promise<Content[]>;
+  assignHotkey: (contentId: number, hotkey: string) => Promise<string>;
   deleteContent: (content: Content) => void;
 }
 
@@ -19,6 +20,8 @@ const electronApi: IElectronAPI = {
   unsubscribeClipboardData: () =>
     ipcRenderer.removeAllListeners("clipboard-updated"),
   getContents: () => ipcRenderer.invoke("getContents"),
+  assignHotkey: (contentId: number, hotkey: string) =>
+    ipcRenderer.invoke("assignHotkey", contentId, hotkey),
   deleteContent: (content: Content) =>
     ipcRenderer.send("deleteContent", content),
 };

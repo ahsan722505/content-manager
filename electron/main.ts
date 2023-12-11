@@ -1,6 +1,7 @@
 import { app, BrowserWindow, globalShortcut, ipcMain } from "electron";
 import path from "node:path";
 import {
+  assignHotkey,
   clipboardListener,
   deleteContent,
   getClipboardContents,
@@ -78,6 +79,10 @@ app
     await setupDatabase();
     latestContents.initialize();
     ipcMain.handle("getContents", async () => await getClipboardContents());
+    ipcMain.handle(
+      "assignHotkey",
+      async (_, contentId, hotkey) => await assignHotkey(contentId, hotkey)
+    );
     ipcMain.on("deleteContent", (_, content) => deleteContent(content));
     createWindow();
   });
