@@ -39,6 +39,7 @@ export async function getClipboardContents(): Promise<Content[]> {
 }
 
 export async function storeClipboardContent(text: string): Promise<number> {
+  console.log("Storing content: ", text);
   return new Promise((resolve, reject) => {
     const { db } = new sqlite();
     db.run(
