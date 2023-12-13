@@ -4,24 +4,28 @@ import { KeyOutlined } from "@ant-design/icons";
 import { Content } from "../../electron/utils";
 
 const AssignHotKey = ({
-  contentId,
+  content,
   setContents,
+  edit,
 }: {
-  contentId: number;
+  content: Content;
   setContents: React.Dispatch<React.SetStateAction<Content[]>>;
+  edit: boolean;
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [hotkey, setHotkey] = useState<Set<string>>(new Set());
+  const [hotkey, setHotkey] = useState<Set<string>>(
+    new Set(content.hotkey?.split("+") || [])
+  );
 
   const handleOk = async () => {
     try {
       const res = await window.electronAPI.assignHotkey(
-        contentId,
+        content.ID,
         Array.from(hotkey).join("+")
       );
       setContents((state) =>
         state.map((c) => {
-          if (c.ID === contentId) {
+          if (c.ID === content.ID) {
             return { ...c, hotkey: Array.from(hotkey).join("+") };
           }
           return c;
@@ -62,9 +66,8 @@ const AssignHotKey = ({
         onClick={() => setIsModalOpen(true)}
         icon={<KeyOutlined />}
         size="small"
-        className="ml-2"
       >
-        Assign Hotkey
+        {edit ? "Edit" : "Assign"} Hotkey
       </Button>
       <Modal
         title="Assign Hotkey"

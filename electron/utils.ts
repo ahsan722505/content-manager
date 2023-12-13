@@ -1,11 +1,11 @@
-import { clipboard } from "electron";
+import { clipboard, globalShortcut } from "electron";
 import { exec } from "child_process";
 import { sqlite } from "./sqlite";
 
 export type Content = {
   ID: number;
   content: string;
-  hotkey?: string;
+  hotkey: string | null;
 };
 
 let customPasting = false;
@@ -14,8 +14,8 @@ export async function clipboardListener(callback: (content: Content) => void) {
   setInterval(async () => {
     const text = clipboard.readText().trim();
     if (text !== latestContents.get(0) && text !== "" && !customPasting) {
-      const id = await storeClipboardContent(text);
-      callback({ ID: id, content: text });
+      const content = await storeClipboardContent(text);
+      callback(content);
     }
   }, 1000);
 }
@@ -38,20 +38,26 @@ export async function getClipboardContents(): Promise<Content[]> {
   });
 }
 
-export async function storeClipboardContent(text: string): Promise<number> {
-  console.log("Storing content: ", text);
-  return new Promise((resolve, reject) => {
+export async function storeClipboardContent(text: string): Promise<Content> {
+  return new Promise((resolve) => {
     const { db } = new sqlite();
-    db.run(
-      `INSERT OR REPLACE INTO contents (content) VALUES (?)`,
+    db.get(
+      `SELECT * FROM contents WHERE content = ?`,
       [text],
-      function (error) {
-        if (error) {
-          reject(error);
-        } else {
-          console.log(this);
-          resolve(this.lastID);
-        }
+      (_, row: Content) => {
+        db.run(
+          `INSERT OR REPLACE INTO contents (content, hotkey) VALUES (?, ?)`,
+          [text, row?.hotkey],
+          () => {
+            db.get(
+              `SELECT * FROM contents WHERE content = ?`,
+              [text],
+              (_, row: Content) => {
+                resolve(row);
+              }
+            );
+          }
+        );
       }
     );
     latestContents.addContent(text);
@@ -120,6 +126,15 @@ export function assignHotkey(
               if (error) {
                 reject(error);
               } else {
+                db.get(
+                  `SELECT * FROM contents WHERE id = ?`,
+                  [contentId],
+                  (_, row: Content) => {
+                    globalShortcut.register(hotkey, () =>
+                      pasteContent(row.content)
+                    );
+                  }
+                );
                 resolve("Hotkey assigned successfully.");
               }
             }

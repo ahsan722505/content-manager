@@ -3,12 +3,14 @@ import path from "node:path";
 import {
   assignHotkey,
   clipboardListener,
+  Content,
   deleteContent,
   getClipboardContents,
   latestContents,
   pasteContent,
   setupDatabase,
 } from "./utils";
+import { sqlite } from "./sqlite";
 
 // The built directory structure
 //
@@ -68,15 +70,25 @@ app.on("activate", () => {
 
 app
   .whenReady()
-  .then(() => {
+  .then(async () => {
+    await setupDatabase();
     for (let i = 1; i <= 9; i++) {
       globalShortcut.register(`CommandOrControl+${i}`, () =>
         pasteContent(latestContents.get(i - 1))
       );
     }
+    const { db } = new sqlite();
+    db.all(
+      `SELECT * FROM contents
+      WHERE hotkey IS NOT NULL`,
+      (_, rows: Content[]) => {
+        rows.forEach((row) => {
+          globalShortcut.register(row.hotkey!, () => pasteContent(row.content));
+        });
+      }
+    );
   })
   .then(async () => {
-    await setupDatabase();
     latestContents.initialize();
     ipcMain.handle("getContents", async () => await getClipboardContents());
     ipcMain.handle(
