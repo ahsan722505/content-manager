@@ -3,14 +3,13 @@ import path from "node:path";
 import {
   assignHotkey,
   clipboardListener,
-  Content,
   deleteContent,
   getClipboardContents,
   latestContents,
   pasteContent,
-  setupDatabase,
+  unassignHotkey,
 } from "./utils";
-import { sqlite } from "./sqlite";
+import { Sqlite } from "./sqlite";
 
 // The built directory structure
 //
@@ -71,29 +70,31 @@ app.on("activate", () => {
 app
   .whenReady()
   .then(async () => {
-    await setupDatabase();
+    const db = new Sqlite();
+    await db.setupDatabase();
     for (let i = 1; i <= 9; i++) {
       globalShortcut.register(`CommandOrControl+${i}`, () =>
         pasteContent(latestContents.get(i - 1))
       );
     }
-    const { db } = new sqlite();
-    db.all(
-      `SELECT * FROM contents
-      WHERE hotkey IS NOT NULL`,
-      (_, rows: Content[]) => {
-        rows.forEach((row) => {
-          globalShortcut.register(row.hotkey!, () => pasteContent(row.content));
-        });
-      }
-    );
+    const contents = await db.getContents();
+    contents.forEach((content) => {
+      if (!content.hotkey) return;
+      globalShortcut.register(content.hotkey, () =>
+        pasteContent(content.content)
+      );
+    });
   })
   .then(async () => {
     latestContents.initialize();
     ipcMain.handle("getContents", async () => await getClipboardContents());
     ipcMain.handle(
       "assignHotkey",
-      async (_, contentId, hotkey) => await assignHotkey(contentId, hotkey)
+      async (_, content, hotkey) => await assignHotkey(content, hotkey)
+    );
+    ipcMain.handle(
+      "unassignHotkey",
+      async (_, content) => await unassignHotkey(content)
     );
     ipcMain.on("deleteContent", (_, content) => deleteContent(content));
     createWindow();

@@ -1,6 +1,6 @@
 import { clipboard, globalShortcut } from "electron";
 import { exec } from "child_process";
-import { sqlite } from "./sqlite";
+import { Sqlite } from "./sqlite";
 
 export type Content = {
   ID: number;
@@ -21,47 +21,20 @@ export async function clipboardListener(callback: (content: Content) => void) {
 }
 
 export async function getClipboardContents(): Promise<Content[]> {
-  const { db } = new sqlite();
-  return new Promise((resolve, reject) => {
-    db.all(
-      `SELECT * FROM contents
-    ORDER BY id DESC;`,
-      (error, rows: Content[]) => {
-        if (error) {
-          reject(error);
-        } else {
-          console.log(rows);
-          resolve(rows);
-        }
-      }
-    );
-  });
+  const db = new Sqlite();
+  const contents = await db.getContents();
+  return contents;
 }
 
 export async function storeClipboardContent(text: string): Promise<Content> {
-  return new Promise((resolve) => {
-    const { db } = new sqlite();
-    db.get(
-      `SELECT * FROM contents WHERE content = ?`,
-      [text],
-      (_, row: Content) => {
-        db.run(
-          `INSERT OR REPLACE INTO contents (content, hotkey) VALUES (?, ?)`,
-          [text, row?.hotkey],
-          () => {
-            db.get(
-              `SELECT * FROM contents WHERE content = ?`,
-              [text],
-              (_, row: Content) => {
-                resolve(row);
-              }
-            );
-          }
-        );
-      }
-    );
-    latestContents.addContent(text);
+  const db = new Sqlite();
+  const existingContent = await db.getContentByText(text);
+  const content = await db.addContent({
+    content: text,
+    hotkey: existingContent ? existingContent.hotkey : null,
   });
+  latestContents.addContent(text);
+  return content;
 }
 
 export function pasteContent(content: string | undefined) {
@@ -76,73 +49,39 @@ export function pasteContent(content: string | undefined) {
 }
 
 export async function deleteContent(content: Content) {
-  const { db } = new sqlite();
-  db.run(`DELETE FROM contents WHERE id = ?`, [content.ID]);
+  const db = new Sqlite();
+  await db.deleteContent(content.ID);
   if (latestContents.get(0) === content.content) {
     clipboard.writeText(latestContents.get(1));
   }
   latestContents.deleteContent(content.content);
+  if (content.hotkey) {
+    globalShortcut.unregister(content.hotkey);
+  }
 }
 
-export function setupDatabase(): Promise<void> {
-  const { db } = new sqlite();
-  return new Promise((resolve) => {
-    db.exec(
-      `
-      CREATE TABLE IF NOT EXISTS contents
-(
-    ID INTEGER PRIMARY KEY AUTOINCREMENT,
-    content TEXT UNIQUE NOT NULL,
-    hotkey TEXT UNIQUE
-);
-`,
-      (error) => {
-        console.log(error);
-        resolve();
-      }
-    );
-  });
-}
-
-export function assignHotkey(
-  contentId: number,
+export async function assignHotkey(
+  content: Content,
   hotkey: string
 ): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const { db } = new sqlite();
-    db.get(
-      `SELECT * FROM contents WHERE hotkey = ?`,
-      [hotkey],
-      (error, row) => {
-        if (error) {
-          reject(error);
-        } else if (row) {
-          reject("Hotkey is already assigned to some other content.");
-        } else {
-          db.run(
-            `UPDATE contents SET hotkey = ? WHERE id = ?`,
-            [hotkey, contentId],
-            (error) => {
-              if (error) {
-                reject(error);
-              } else {
-                db.get(
-                  `SELECT * FROM contents WHERE id = ?`,
-                  [contentId],
-                  (_, row: Content) => {
-                    globalShortcut.register(hotkey, () =>
-                      pasteContent(row.content)
-                    );
-                  }
-                );
-                resolve("Hotkey assigned successfully.");
-              }
-            }
-          );
-        }
-      }
-    );
-  });
+  const db = new Sqlite();
+  const existingContent = await db.getContentByHotkey(hotkey);
+  if (existingContent) {
+    return "Hotkey is already assigned to some other content.";
+  }
+  if (content.hotkey) {
+    globalShortcut.unregister(content.hotkey);
+  }
+  await db.updateHotkey(content.ID, hotkey);
+  globalShortcut.register(hotkey, () => pasteContent(content.content));
+  return "Hotkey assigned successfully.";
+}
+
+export async function unassignHotkey(content: Content): Promise<string> {
+  const db = new Sqlite();
+  await db.updateHotkey(content.ID, null);
+  globalShortcut.unregister(content.hotkey!);
+  return "Hotkey unassigned successfully.";
 }
 
 export class LatestContentsCache {

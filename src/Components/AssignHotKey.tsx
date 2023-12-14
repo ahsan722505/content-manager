@@ -17,16 +17,25 @@ const AssignHotKey = ({
     new Set(content.hotkey?.split("+") || [])
   );
 
-  const handleOk = async () => {
+  const handleOk = async (operation: "Assign" | "Unassign") => {
     try {
-      const res = await window.electronAPI.assignHotkey(
-        content.ID,
-        Array.from(hotkey).join("+")
-      );
+      let res: string;
+      if (operation === "Assign") {
+        res = await window.electronAPI.assignHotkey(
+          content,
+          Array.from(hotkey).join("+")
+        );
+      } else {
+        res = await window.electronAPI.unassignHotkey(content);
+      }
       setContents((state) =>
         state.map((c) => {
           if (c.ID === content.ID) {
-            return { ...c, hotkey: Array.from(hotkey).join("+") };
+            return {
+              ...c,
+              hotkey:
+                operation === "Assign" ? Array.from(hotkey).join("+") : null,
+            };
           }
           return c;
         })
@@ -70,7 +79,7 @@ const AssignHotKey = ({
         {edit ? "Edit" : "Assign"} Hotkey
       </Button>
       <Modal
-        title="Assign Hotkey"
+        title={`${edit ? "Edit" : "Assign"} Hotkey`}
         open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
         footer={[
@@ -78,14 +87,19 @@ const AssignHotKey = ({
             Clear
           </Button>,
           <Button
-            key="submit"
+            key="assign"
             type="primary"
-            onClick={handleOk}
+            onClick={() => handleOk("Assign")}
             className="bg-green-600"
             disabled={hotkey.size === 0}
           >
             Assign
           </Button>,
+          edit && (
+            <Button key="unassign" danger onClick={() => handleOk("Unassign")}>
+              Unassign
+            </Button>
+          ),
         ]}
       >
         <Input
