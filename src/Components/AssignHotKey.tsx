@@ -55,7 +55,9 @@ const AssignHotKey = ({
     const handleKeyDown = (e: KeyboardEvent) => {
       setHotkey((state) => {
         const newState = new Set(state);
-        newState.add(e.key);
+        if (e.key === "Backspace") {
+          newState.delete(Array.from(state).pop() || "");
+        } else newState.add(e.key);
         return newState;
       });
     };
@@ -83,9 +85,6 @@ const AssignHotKey = ({
         open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
         footer={[
-          <Button key="clear" onClick={() => setHotkey(new Set())}>
-            Clear
-          </Button>,
           <Button
             key="assign"
             type="primary"

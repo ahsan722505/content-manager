@@ -67,7 +67,7 @@ export async function assignHotkey(
   const db = new Sqlite();
   const existingContent = await db.getContentByHotkey(hotkey);
   if (existingContent) {
-    return "Hotkey is already assigned to some other content.";
+    throw new Error("Hotkey is already assigned.");
   }
   if (content.hotkey) {
     globalShortcut.unregister(content.hotkey);
