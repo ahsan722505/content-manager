@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Button, Input, Modal, message } from "antd";
-import { KeyOutlined } from "@ant-design/icons";
 import { Content } from "../../electron/utils";
 
 const AssignHotKey = ({
@@ -73,13 +72,9 @@ const AssignHotKey = ({
 
   return (
     <>
-      <Button
-        onClick={() => setIsModalOpen(true)}
-        icon={<KeyOutlined />}
-        size="small"
-      >
+      <div onClick={() => setIsModalOpen(true)}>
         {edit ? "Edit" : "Assign"} Hotkey
-      </Button>
+      </div>
       <Modal
         title={`${edit ? "Edit" : "Assign"} Hotkey`}
         open={isModalOpen}

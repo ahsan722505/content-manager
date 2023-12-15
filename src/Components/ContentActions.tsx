@@ -1,5 +1,5 @@
-import { Button, Dropdown, MenuProps, Popconfirm, message } from "antd";
-import { MoreOutlined } from "@ant-design/icons";
+import { Dropdown, MenuProps, Popconfirm, message } from "antd";
+import { MoreOutlined, KeyOutlined, DeleteOutlined } from "@ant-design/icons";
 import { Content } from "../../electron/utils";
 import AssignHotKey from "./AssignHotKey";
 
@@ -28,11 +28,10 @@ const ContentActions = ({
           cancelText="No"
           okButtonProps={{ danger: true }}
         >
-          <Button danger size="small">
-            Delete Content
-          </Button>
+          Delete Content
         </Popconfirm>
       ),
+      icon: <DeleteOutlined />,
     },
     {
       key: "2",
@@ -43,6 +42,7 @@ const ContentActions = ({
           content={content}
         />
       ),
+      icon: <KeyOutlined />,
     },
   ];
   return (
