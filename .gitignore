@@ -26,3 +26,4 @@ release
 *.sw?
 contents.json
 content.db
+.env
