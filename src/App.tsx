@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 import EachContent from "./Components/EachContent";
-import { Checkbox, Input } from "antd";
+import { Button, Checkbox, Input } from "antd";
 import { Content } from "../electron/utils";
+import { createOffer } from "./webrtc";
 
 function App() {
   const [contents, setContents] = useState<Content[]>([]);
@@ -33,6 +34,7 @@ function App() {
 
   return (
     <div className="m-3">
+      <Button onClick={() => createOffer()}>Create connection</Button>
       <Input
         className="mb-3"
         placeholder="Search Content"

@@ -1,14 +1,16 @@
 import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = import.meta.env.RENDERER_VITE_SUPABASE_URL;
-const SUPABASE_KEY = import.meta.env.RENDERER_VITE_SUPABASE_KEY;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
+// console.log(import.meta.env.RENDERER_VITE_SUPABASE_URL);
 
 const client = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const channel = client.channel("signaling-server");
 
 channel
-  .on("broadcast", { event: "signal" }, (payload) => {
+  .on("broadcast", { event: "signal" }, ({ payload }) => {
+    console.log(payload);
     if (payload.offer) {
       // Handle incoming offer
       handleOffer(payload.offer);
@@ -27,6 +29,12 @@ const configuration = {
 };
 
 const peerConnection = new RTCPeerConnection(configuration);
+peerConnection.addEventListener("connectionstatechange", (_) => {
+  if (peerConnection.connectionState === "connected") {
+    // Peers connected!
+    console.log("connected");
+  }
+});
 
 const dataChannel = peerConnection.createDataChannel("clipboard");
 
@@ -35,7 +43,7 @@ dataChannel.addEventListener("message", (event) => {
 });
 
 // Set up offer/answer negotiation
-async function createOffer() {
+export async function createOffer() {
   const offer = await peerConnection.createOffer();
   await peerConnection.setLocalDescription(offer);
 
@@ -47,9 +55,10 @@ async function createOffer() {
   });
 }
 
-createOffer();
+// createOffer();
 
 peerConnection.onicecandidate = (event) => {
+  console.log("onicecandidate");
   if (event.candidate) {
     // Send the ICE candidate to the other peer through Supabase
     channel.send({
