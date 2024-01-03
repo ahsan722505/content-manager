@@ -41,11 +41,12 @@ export function pasteContent(content: string | undefined) {
   if (!content) return;
   customPasting = true;
   clipboard.writeText(content);
-  console.log("Pasting content: ", content);
   const childProcess = exec("./cpp/keyboard");
   childProcess.on("exit", () => {
-    clipboard.writeText(latestContents.get(0));
-    customPasting = false;
+    setTimeout(() => {
+      clipboard.writeText(latestContents.get(0));
+      customPasting = false;
+    }, 100);
   });
 }
 
