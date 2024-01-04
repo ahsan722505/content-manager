@@ -34,7 +34,7 @@ function App() {
 
   return (
     <div className="m-3">
-      <Button onClick={() => createOffer()}>Create connection</Button>
+      {/* <Button onClick={() => createOffer()}>Create connection</Button> */}
       <Input
         className="mb-3"
         placeholder="Search Content"
