@@ -11,7 +11,6 @@ const AssignHotKey = ({
   setContents: React.Dispatch<React.SetStateAction<Content[]>>;
   edit: boolean;
 }) => {
-  console.log("mounted");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [hotkey, setHotkey] = useState<Set<string>>(
     new Set(content.hotkey?.split("+") || [])
