@@ -11,3 +11,5 @@ Features:
 => You can also assign hotkey to individual content.
 
 => You can synchronize clipboards between different devices (Copy on one device and paste in another.)  -----> coming soon
+
+=> This app can be your password manager as well.
