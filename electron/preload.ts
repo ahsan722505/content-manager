@@ -10,6 +10,7 @@ export interface IElectronAPI {
   unsubscribeClipboardData: () => void;
   getContents: () => Promise<Content[]>;
   assignHotkey: (content: Content, hotkey: string) => Promise<string>;
+  syncRemoteClipboard: (text: string) => Promise<void>;
   unassignHotkey: (content: Content) => Promise<string>;
   deleteContent: (content: Content) => void;
 }
@@ -23,6 +24,8 @@ const electronApi: IElectronAPI = {
   getContents: () => ipcRenderer.invoke("getContents"),
   assignHotkey: (content: Content, hotkey: string) =>
     ipcRenderer.invoke("assignHotkey", content, hotkey),
+  syncRemoteClipboard: (text: string) =>
+    ipcRenderer.invoke("syncRemoteClipboard", text),
   unassignHotkey: (content: Content) =>
     ipcRenderer.invoke("unassignHotkey", content),
   deleteContent: (content: Content) =>

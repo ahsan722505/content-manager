@@ -7,6 +7,7 @@ import {
   getClipboardContents,
   latestContents,
   pasteContent,
+  syncRemoteClipboard,
   unassignHotkey,
 } from "./utils";
 import { Sqlite } from "./sqlite";
@@ -92,6 +93,10 @@ app
       "assignHotkey",
       async (_, content, hotkey) => await assignHotkey(content, hotkey)
     );
+    ipcMain.handle("syncRemoteClipboard", async (_, text) => {
+      const content = await syncRemoteClipboard(text);
+      win?.webContents.send("clipboard-updated", content);
+    });
     ipcMain.handle(
       "unassignHotkey",
       async (_, content) => await unassignHotkey(content)

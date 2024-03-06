@@ -1,6 +1,14 @@
 import { clipboard, globalShortcut } from "electron";
 import { exec } from "child_process";
 import { Sqlite } from "./sqlite";
+import { createClient } from "@supabase/supabase-js";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
+
+const client = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const channel = client.channel("clipboard");
 
 export type Content = {
   ID: number;
@@ -14,10 +22,23 @@ export async function clipboardListener(callback: (content: Content) => void) {
   setInterval(async () => {
     const text = clipboard.readText().trim();
     if (text !== latestContents.get(0) && text !== "" && !customPasting) {
+      channel.send({
+        type: "broadcast",
+        event: "clipboard-updated",
+        payload: { content: text },
+      });
       const content = await storeClipboardContent(text);
       callback(content);
     }
   }, 1000);
+}
+
+export async function syncRemoteClipboard(text: string) {
+  customPasting = true;
+  clipboard.writeText(text);
+  const content = await storeClipboardContent(text);
+  customPasting = false;
+  return content;
 }
 
 export async function getClipboardContents(): Promise<Content[]> {
