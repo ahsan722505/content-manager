@@ -2,7 +2,7 @@ I call it as content manager. Some people may call it as clipboard manager but i
 
 Features:
 
-=> It is a Cross Platform application (windows, linux, mac)
+=> It is a Cross Platform application (windows, linux, mac).
 
 => It can store clipboard history.
 
