@@ -1,4 +1,4 @@
-I call it as a content manager. Some people may call it as a clipboard manager but it does more than a clipboard manager.
+I call it as a content manager. Some people may like to call it as a clipboard manager but it does more than a clipboard manager.
 
 Features:
 
